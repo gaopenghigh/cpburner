@@ -1,0 +1,23 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cpburner-list
+  labels:
+    app: cpburner-list
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cpburner-list
+  template:
+    metadata:
+      labels:
+        app: cpburner-list
+    spec:
+      serviceAccountName: cpburner
+      automountServiceAccountToken: true
+      containers:
+      - name: list
+        image: largeclustere2e.azurecr.io/test/cpburner:v20220630.1
+        command: ["cpburner", "-resourceCount", "100000", "-resourceType", "configmap", "--concurrency", "20", "-action", "list", "-listForever", "-listLimit", "10000"]

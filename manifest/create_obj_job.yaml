@@ -1,0 +1,15 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cpburner-create-configmaps
+spec:
+  template:
+    spec:
+      serviceAccountName: cpburner
+      automountServiceAccountToken: true
+      containers:
+      - name: cpburner-create-configmaps
+        image: largeclustere2e.azurecr.io/test/cpburner:v20220630.1
+        command: ["cpburner", "-resourceCount", "100000", "-resourceType", "configmap", "-action", "create"]
+      restartPolicy: Never
+  backoffLimit: 4

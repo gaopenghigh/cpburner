@@ -41,10 +41,11 @@ var (
 
 func main() {
 	kubeconfig := flag.String("kubeconfig", "", "Absolute path to the kubeconfig file")
-	resourceType := flag.String("resourceType", resourceTypeEvent, "What kind of reource to generate, can be 'event' or 'configmap'")
+	resourceType := flag.String("resourceType", resourceTypeConfigMap, "What kind of reource to generate, can be 'event' or 'configmap'")
 	resourceCount := flag.Int("resourceCount", 100000, "How many resources to generate")
-	flag.IntVar(&concurrency, "concurrency", 100, "clientset concurrency")
-	flag.Int64Var(&listLimit, "listLimit", 10000, "Limit in list option")
+	listForever := flag.Bool("listForever", false, "Do list calls again and again")
+	flag.IntVar(&concurrency, "concurrency", 10, "clientset concurrency")
+	flag.Int64Var(&listLimit, "listLimit", 2000, "Limit in list option")
 	action := flag.String("action", actionCreate, "one of 'create', 'list' and 'clean'")
 	flag.Parse()
 
@@ -82,7 +83,14 @@ func main() {
 	} else if *action == actionClean {
 		cleanup(config, *resourceType)
 	} else if *action == actionList {
-		list(config, *resourceType)
+		if *listForever {
+			for {
+				list(config, *resourceType)
+			}
+		} else {
+			list(config, *resourceType)
+
+		}
 	}
 
 	showStatus()
@@ -158,9 +166,10 @@ func generateEvents(ctx context.Context, clientset *kubernetes.Clientset, namePr
 	for i := 0; i < count; i++ {
 		spec.ObjectMeta.Name = fmt.Sprintf("%s-%d", namePrefix, i)
 		_, err := client.Create(ctx, spec, metav1.CreateOptions{})
-		atomic.AddInt64(&counterSuccess, 1)
 		if err != nil {
 			atomic.AddInt64(&counterFailure, 1)
+		} else {
+			atomic.AddInt64(&counterSuccess, 1)
 		}
 	}
 }
@@ -174,9 +183,10 @@ func generateConfigMaps(ctx context.Context, clientset *kubernetes.Clientset, na
 	for i := 0; i < count; i++ {
 		spec.ObjectMeta.Name = fmt.Sprintf("%s-%d", namePrefix, i)
 		_, err := client.Create(ctx, spec, metav1.CreateOptions{})
-		atomic.AddInt64(&counterSuccess, 1)
 		if err != nil {
 			atomic.AddInt64(&counterFailure, 1)
+		} else {
+			atomic.AddInt64(&counterSuccess, 1)
 		}
 	}
 }
